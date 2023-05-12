@@ -36,6 +36,8 @@ Window {
 
     function calculateTotalAngle() {
         var total = 0
+        var averageAngle = 0
+
         for (var i = 2; i < lineModel.count; ++i) {
             var coord1 = QtPositioning.coordinate(lineModel.get(i-2).latitude, lineModel.get(i-2).longitude)
             var coord2 = QtPositioning.coordinate(lineModel.get(i-1).latitude, lineModel.get(i-1).longitude)
@@ -43,8 +45,10 @@ Window {
             var angle1 = coord1.azimuthTo(coord2)
             var angle2 = coord2.azimuthTo(coord3)
             total += Math.abs(angle2 - angle1)
+            averageAngle = total / (lineModel.count - 2); //  розділивши загальний кут на кількість маневрів (або кількість точок - 2, оскільки кожен маневр визначається трьома точками).
+
         }
-        return total
+        return averageAngle
     }
 
     ListModel {id: lineModel}
@@ -190,7 +194,7 @@ Window {
 
         Rectangle {
             width: 200
-            height: 150
+            height: pointsText.height + distanceText.height + angleText.height + textLine.spacing*4
             color: "#A6A1A1"
             anchors.top: parent.top
             anchors.left: parent.left
@@ -205,27 +209,27 @@ Window {
                     text: "Кількість точок: " + totalPoints
                     font.family: "Agency FB"
                     color: "#FFFFFF"
-                    font.pointSize: 10
+                    font.pointSize: 9
                     horizontalAlignment: Text.AlignHCenter
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
 
                 Text {
                     id: distanceText
-                    text: "Загальна відстань: " + totalDistance + " км"
+                    text: "Загальна відстань: " + totalDistance.toFixed(3) + " км"
                     font.family: "Agency FB"
                     color: "#FFFFFF"
-                    font.pointSize: 10
+                    font.pointSize: 9
                     horizontalAlignment: Text.AlignHCenter
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
 
                 Text {
                     id: angleText
-                    text: "Загальний кут: " + totalAngle + " градусів"
+                    text: "Загальний кут: " + totalAngle.toFixed(2) + " градусів"
                     font.family: "Agency FB"
                     color: "#FFFFFF"
-                    font.pointSize: 10
+                    font.pointSize: 9
                     horizontalAlignment: Text.AlignHCenter
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
