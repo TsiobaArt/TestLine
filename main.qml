@@ -62,7 +62,7 @@ Window {
         var path = [];
         for (var i = 0; i < lineModel.count; ++i) {
             var coord = lineModel.get(i);
-            path.push(QtPositioning.coordinate(coord.latitude, coord.longitude));
+            path.push({latitude: coord.latitude, longitude: coord.longitude});
         }
         linePolyline.path = path;
     }
@@ -146,11 +146,12 @@ Window {
                         acceptedButtons: Qt.LeftButton | Qt.RightButton
                         drag.target: parent
                         onPositionChanged: {
-                            var newCoordinate = map.toCoordinate(map.mapFromItem(parent, mouse.x, mouse.y));
-                            lineModel.setProperty(index, "latitude", newCoordinate.latitude); // Изменяет свойство элемента по индексу в модели списка на значение.
+                            var newCoordinate = parent.coordinate;
+                            lineModel.setProperty(index, "latitude", newCoordinate.latitude);
                             lineModel.setProperty(index, "longitude", newCoordinate.longitude);
                             updatePolyline();
                         }
+
                         onPressed:  {
                             console.log("onPressed")
                             if (mouse.button == Qt.RightButton) {
