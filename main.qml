@@ -70,12 +70,14 @@ Window {
     Map {
         id:map
         anchors.fill: parent
+
         plugin: Plugin {name: "mapboxgl"}
         center: QtPositioning.coordinate(50.527887655789385, 30.614663315058465)
         zoomLevel: 14
 
         MouseArea {
             anchors.fill: parent
+            hoverEnabled: true
             onDoubleClicked: {
                 if(rulerMode) {
                     var clickedCoordinaye = map.toCoordinate(Qt.point(mouse.x, mouse.y))
@@ -145,6 +147,13 @@ Window {
                         // hoverEnabled: true
                         acceptedButtons: Qt.LeftButton | Qt.RightButton
                         drag.target: parent
+                        onClicked:  {
+                            console.log("onPressed")
+                            if (mouse.button == Qt.RightButton) {
+                                markerMenu.target = markerPoint.modelData // use modelData instead of model
+                                markerMenu.open()
+                            }
+                        }
                         onPositionChanged: {
                             var newCoordinate = parent.coordinate;
                             lineModel.setProperty(index, "latitude", newCoordinate.latitude);
@@ -152,13 +161,6 @@ Window {
                             updatePolyline();
                         }
 
-                        onPressed:  {
-                            console.log("onPressed")
-                            if (mouse.button == Qt.RightButton) {
-                                markerMenu.target = markerPoint.modelData // use modelData instead of model
-                                markerMenu.open()
-                            }
-                        }
                     }
                     Menu {
                         id: markerMenu
