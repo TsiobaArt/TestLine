@@ -17,6 +17,7 @@ Window {
     property int totalPoints: lineModel.count
     property real totalDistance: 0
     property real totalAngle: 0
+    property int indexRulerItem
 
     function updateProperties() {
         totalPoints = lineModel.count
@@ -57,7 +58,6 @@ Window {
     function appendToLineModel(lat, lon) {
         lineModel.append({"latitude": lat , "longitude": lon});
     }
-
     function updatePolyline() {
         var path = [];
         for (var i = 0; i < lineModel.count; ++i) {
@@ -77,18 +77,26 @@ Window {
 
         MouseArea {
             anchors.fill: parent
-            hoverEnabled: true
+            //            hoverEnabled: true
             onDoubleClicked: {
                 if(rulerMode) {
                     var clickedCoordinaye = map.toCoordinate(Qt.point(mouse.x, mouse.y))
                     appendToLineModel(clickedCoordinaye.latitude, clickedCoordinaye.longitude)
                     updateProperties()
+                    indexRulerItem = lineModel.count - 1;
                 }
                 console.log (lineModel.count)
                 updatePolyline();
-
             }
-
+            onPositionChanged: {
+                 if(rulerMode) {
+                var clickedCoordinaye = map.toCoordinate(Qt.point(mouse.x, mouse.y))
+                lineModel.setProperty(indexRulerItem, "latitude", clickedCoordinaye.latitude);
+                lineModel.setProperty(indexRulerItem, "longitude", clickedCoordinaye.longitude);
+                console.log ("lineGroup.indexRulerItem  ",indexRulerItem)
+                updatePolyline();
+                 }
+            }
         }
 
         MapItemGroup {
@@ -144,23 +152,24 @@ Window {
                     MouseArea {
                         id: mouseArea
                         anchors.fill: parent
-                        // hoverEnabled: true
                         acceptedButtons: Qt.LeftButton | Qt.RightButton
-                        drag.target: parent
+                        drag.target: markerPoint
                         onClicked:  {
                             console.log("onPressed")
+                            indexRulerItem = index
+                            console.log("model.index " , model.index)
                             if (mouse.button == Qt.RightButton) {
                                 markerMenu.target = markerPoint.modelData // use modelData instead of model
                                 markerMenu.open()
                             }
                         }
-                        onPositionChanged: {
-                            var newCoordinate = parent.coordinate;
-                            lineModel.setProperty(index, "latitude", newCoordinate.latitude);
-                            lineModel.setProperty(index, "longitude", newCoordinate.longitude);
-                            updatePolyline();
+                        onEntered:  {console.log ("lineGroup.indexRulerItem  ",indexRulerItem)}
+                        onPressed: {
+                            indexRulerItem = index
                         }
-
+                        onReleased: {
+                            indexRulerItem = index
+                        }
                     }
                     Menu {
                         id: markerMenu
@@ -176,7 +185,13 @@ Window {
                                         break;
                                     }
                                 }
-                                updatePolyline()
+                                if (lineModel.count > 0) {
+                                    indexRulerItem = lineModel.count - 1;
+                                    updatePolyline();
+                                } else {
+                                    polyline.clear();
+                                    distanceLabel.text = "0";
+                                }
                                 menu.close();
                             }
                         }
