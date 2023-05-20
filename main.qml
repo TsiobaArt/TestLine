@@ -115,9 +115,11 @@ Window {
                         var coorinate3 = parent.coordinate
                         lineModel.set(markerPoint.itemIndex, {"latitude": coorinate3.latitude, "longitude": coorinate3.longitude});
                     }
-//                    onPositionChanged: {
+                    onPositionChanged: {
+                        var coorinate3 = parent.coordinate
+                        lineModel.set(markerPoint.itemIndex, {"latitude": coorinate3.latitude, "longitude": coorinate3.longitude});
 
-//                    }
+                    }
 
 
                 }
