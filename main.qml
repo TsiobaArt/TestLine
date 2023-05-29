@@ -5,14 +5,20 @@ import QtLocation 5.15
 import QtPositioning 5.15
 import Qt.labs.qmlmodels 1.0
 import Qt.labs.platform 1.0
+import QtCharts 2.15
 
 Window {
+    id: root
     width: 640
     height: 480
     visible: true
     title: qsTr("Hello World")
 
     ListModel {id: lineModel}
+
+    MyGraficItem {
+        id: graficItem
+    }
 
     function updatePropery(idx,lat,lon){
         var newCoordinate = QtPositioning.coordinate(lat, lon)
@@ -21,8 +27,6 @@ Window {
         var prevCoordinate
         if (idx > 0) {
             var lastPoint = lineModel.get(idx - 1)
-            console.log ("Index " + idx)
-            console.log ("lastPoint.latitide" + lastPoint.latitude)
             prevCoordinate = QtPositioning.coordinate(lastPoint.latitude, lastPoint.longitude)
             distance = prevCoordinate.distanceTo(newCoordinate)
             azimuth = prevCoordinate.azimuthTo(newCoordinate)
@@ -44,12 +48,12 @@ Window {
         }
         lineModel.append({"latitude": lat, "longitude": lon, "distance": distance, "azimuth": azimuth});
 
-//        lineModel.append({"latitude": lat , "longitude": lon});
-
     }
 
     function updateLineModel () {
+    for (var i=0; lineModel.count <= i; i++) {
 
+    }
 
     }
 
@@ -64,14 +68,7 @@ Window {
         var point = map.fromCoordinate(coordinate);
         return Qt.point(point.x, point.y);
     }
-//    function angleBetweenPoints2(p1, p2) {
-//        var dy = p2.y - p1.y;
-//        var dx = p2.x - p1.x;
-//        var theta = Math.atan2(dy, dx); // range (-PI, PI]
-//        theta *= 180 / Math.PI; // rads to degrees, range (-180, 180]
-//        // add 90 to theta here if the text is rotated by 90 degrees
-//        return theta;
-//    }
+
     function angleBetweenPoints3(p1, p2) {
         var dy = p2.y - p1.y;
         var dx = p2.x - p1.x;
@@ -91,10 +88,14 @@ Window {
         let adjustedAngle = 90 - angle;
         return adjustedAngle;
     }
-//    function adjustAngle(point1, point2) {
-//        var angle = Math.atan2(point2.latitude - point1.latitude, point2.longitude - point1.longitude);
-//        return -(angle * 180 / Math.PI);
-//    }
+    function calculateAngle(coord1, coord2) {
+        var y = Math.sin(coord2.longitude - coord1.longitude) * Math.cos(coord2.latitude);
+        var x = Math.cos(coord1.latitude) * Math.sin(coord2.latitude) -
+            Math.sin(coord1.latitude) * Math.cos(coord2.latitude) * Math.cos(coord2.longitude - coord1.longitude);
+        var bearing = Math.atan2(y, x) * 180 / Math.PI;
+        return (bearing + 360) % 360;
+    }
+
     Map {
         id: map
         anchors.fill: parent
@@ -108,6 +109,7 @@ Window {
             onDoubleClicked: {
                 var clickedCoordinaye = map.toCoordinate(Qt.point(mouse.x, mouse.y))
                 appendToLineModel(clickedCoordinaye.latitude, clickedCoordinaye.longitude)
+                graficItem.updateChartData()
             }
         }
 
@@ -124,6 +126,7 @@ Window {
                 return coordinates;
             }
         }
+
 
         MapItemView {
             id: itemViewLine
@@ -146,7 +149,7 @@ Window {
                     width: 28
                     height: 28
                     radius: 28
-                    color: "lightblue"
+                    color: (!index == 0 ) ? "lightblue" : "green"
 
                     Rectangle {
                         width: 22
@@ -203,6 +206,7 @@ Window {
                         }
                     }
 
+
                 }
 
                 MouseArea {
@@ -222,7 +226,6 @@ Window {
 
                     onEntered: {
                         itemViewLine.modelIndexMarkerPoint = index
-                        console.log ("itemViewLine.modelIndexMarkerPoint " + itemViewLine.modelIndexMarkerPoint)
                     }
 
                     onReleased: {
@@ -234,9 +237,9 @@ Window {
                         var coorinate3 = parent.coordinate
                         lineModel.set(model.index, {"latitude": coorinate3.latitude, "longitude": coorinate3.longitude});
                         updatePropery(index, coorinate3.latitude, coorinate3.longitude)
-
                     }
                 }
+
 
                 Menu {
                     id: markerMenu
@@ -266,34 +269,6 @@ Window {
                             menu.close();
                         }
                     }
-                }
-            }
-        }
-        MapItemView {
-            id: itemViewLineInfo
-            model: lineModel
-            delegate: MapQuickItem {
-                id: markerPointInfo
-                property var modelData: model
-                property var itemIndex: index
-
-                coordinate: index > 0 ? QtPositioning.coordinate(
-                    (model.latitude + lineModel.get(index - 1).latitude) / 2,
-                    (model.longitude + lineModel.get(index - 1).longitude) / 2
-                ) : QtPositioning.coordinate(model.latitude, model.longitude)
-                rotation: itemIndex > 0 ? angleBetweenPoints2(
-                          toWindowCoordinates(QtPositioning.coordinate(model.latitude, model.longitude)),
-                          toWindowCoordinates(QtPositioning.coordinate(lineModel.get(itemIndex - 1).latitude, lineModel.get(itemIndex - 1).longitude))
-                      ) : 0
-                anchorPoint.x: lineInfoLabel.width / 2
-                anchorPoint.y: lineInfoLabel.height / 2
-
-                sourceItem: Label {
-                    id: lineInfoLabel
-                    visible: markerPointInfo.itemIndex > 0
-                    text: modelData.distance.toFixed(2) + " m, " + modelData.azimuth.toFixed(2) + " degrees"
-                    color: "black"
-//                    rotation: -markerPointInfo.rotation // counter-rotate the text to ensure it is horizontally readable
                 }
             }
         }
